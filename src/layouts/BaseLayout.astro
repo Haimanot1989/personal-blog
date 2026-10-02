@@ -1,20 +1,28 @@
 ---
 import '../styles/global.css';
+import LanguageSwitcher from '../components/LanguageSwitcher.astro';
+import { defaultLocale, homeAlternates, homePath, languages, type Alternate, type Locale } from '../i18n';
 
 interface Props {
   title: string;
   description: string;
   publishedDate?: Date;
   noindex?: boolean;
+  locale?: Locale;
+  alternates?: Alternate[];
 }
 
-const { title, description, publishedDate, noindex = false } = Astro.props;
+const {
+  title, description, publishedDate, noindex = false,
+  locale = defaultLocale, alternates = homeAlternates(),
+} = Astro.props;
+const { messages, ogLocale } = languages[locale];
 const pageTitle = `${title} | Haimanot`;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 ---
 
 <!doctype html>
-<html lang="nb">
+<html lang={locale}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -22,11 +30,17 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <meta name="description" content={description} />
     <meta name="author" content="Haimanot" />
     {noindex ? <meta name="robots" content="noindex, follow" /> : <link rel="canonical" href={canonical} />}
+    {!noindex && alternates.map((alternate) => (
+      <link rel="alternate" hreflang={alternate.locale} href={new URL(alternate.href, Astro.site)} />
+    ))}
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={publishedDate ? 'article' : 'website'} />
     <meta property="og:site_name" content="Haimanot" />
-    <meta property="og:locale" content="nb_NO" />
+    <meta property="og:locale" content={ogLocale} />
+    {!noindex && alternates.filter((alternate) => alternate.locale !== locale).map((alternate) => (
+      <meta property="og:locale:alternate" content={languages[alternate.locale].ogLocale} />
+    ))}
     {!noindex && <meta property="og:url" content={canonical} />}
     {publishedDate && <meta property="article:published_time" content={publishedDate.toISOString()} />}
     <meta name="twitter:card" content="summary" />
@@ -35,18 +49,19 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <a class="skip-link" href="#main">Hopp til innhold</a>
+    <a class="skip-link" href="#main">{messages.skipToContent}</a>
     <header class="site-header">
-      <a class="site-name" href="/">Haimanot<span class="domain">.dev</span></a>
-      <nav aria-label="Hovedmeny">
-        <a href="/" aria-current={Astro.url.pathname === '/' ? 'page' : undefined}>Blogg</a>
+      <a class="site-name" href={homePath(locale)}>Haimanot<span class="domain">.dev</span></a>
+      <nav aria-label={messages.mainNavigation}>
+        <a href={homePath(locale)} aria-current={Astro.url.pathname === homePath(locale) ? 'page' : undefined}>{messages.blog}</a>
       </nav>
+      <LanguageSwitcher locale={locale} alternates={alternates} />
     </header>
     <main id="main" tabindex="-1">
       <slot />
     </main>
     <footer class="site-footer">
-      <p>Haimanots personlige blogg. Ingen sporing eller informasjonskapsler.</p>
+      <p>{messages.footer}</p>
     </footer>
   </body>
 </html>

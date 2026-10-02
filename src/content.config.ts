@@ -1,6 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
+import { supportedLocales } from './i18n';
 
 const blog = defineCollection({
   loader: glob({
@@ -12,6 +13,8 @@ const blog = defineCollection({
   schema: z.object({
     title: z.string().trim().min(1),
     description: z.string().trim().min(1),
+    language: z.enum(supportedLocales),
+    translationKey: z.string().regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Use a stable translationKey shared by translations.'),
     publishedDate: z
       .string()
       .regex(/^\d{4}-\d{2}-\d{2}$/, 'Use YYYY-MM-DD for publishedDate.')

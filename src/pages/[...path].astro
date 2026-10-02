@@ -1,0 +1,33 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import HomePage from '../components/HomePage.astro';
+import PostPage from '../components/PostPage.astro';
+import { homePath, postPath, supportedLocales, type Alternate, type Locale } from '../i18n';
+import { getPostAlternates, getPublishedPosts } from '../lib/blog';
+
+export async function getStaticPaths() {
+  const posts = await getPublishedPosts();
+  return [
+    ...supportedLocales.map((locale) => ({
+      params: { path: homePath(locale).slice(1, -1) || undefined },
+      props: { kind: 'home' as const, locale, posts: posts.filter((post) => post.data.language === locale) },
+    })),
+    ...posts.map((post) => ({
+      params: { path: postPath(post.data.language, post.data.slug).slice(1, -1) },
+      props: { kind: 'post' as const, post, alternates: getPostAlternates(post, posts) },
+    })),
+  ];
+}
+
+type Props =
+  | { kind: 'home'; locale: Locale; posts: CollectionEntry<'blog'>[] }
+  | { kind: 'post'; post: CollectionEntry<'blog'>; alternates: Alternate[] };
+
+const props = Astro.props;
+---
+
+{props.kind === 'home' ? (
+  <HomePage locale={props.locale} posts={props.posts} />
+) : (
+  <PostPage post={props.post} alternates={props.alternates} />
+)}

@@ -1,10 +1,20 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { defaultLocale, homePath, languages, supportedLocales } from '../i18n';
+const messages = languages[defaultLocale].messages;
 ---
 
-<BaseLayout title="Siden finnes ikke" description="Denne siden finnes ikke. Gå til forsiden for å lese innleggene." noindex>
+<BaseLayout title={messages.notFoundTitle} description={messages.notFoundDescription} noindex>
   <p class="eyebrow">404</p>
-  <h1>Siden finnes ikke</h1>
-  <p>Lenken kan være feil, eller siden kan ha blitt flyttet.</p>
-  <p><a href="/">Gå til forsiden</a></p>
+  <h1>{messages.notFoundTitle}</h1>
+  {supportedLocales.map((locale) => {
+    const text = languages[locale].messages;
+    return (
+      <section lang={locale} aria-label={text.notFoundTitle} class="error-language">
+        {locale !== defaultLocale && <h2>{text.notFoundTitle}</h2>}
+        <p>{text.notFoundMessage}</p>
+        <p><a href={homePath(locale)}>{text.goHome}</a></p>
+      </section>
+    );
+  })}
 </BaseLayout>

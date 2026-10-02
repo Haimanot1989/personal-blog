@@ -34,6 +34,8 @@ title: "Et nytt innlegg"
 description: "En kort beskrivelse som brukes på forsiden og i SEO-metadata."
 publishedDate: "2026-10-03"
 slug: "et-nytt-innlegg"
+language: "nb"
+translationKey: "my-new-post"
 draft: true
 ---
 
@@ -44,15 +46,48 @@ Innledningen til innlegget.
 Resten av teksten. Bruk beskrivende lenketekster og alternativ tekst på bilder.
 ```
 
-`title`, `description`, `publishedDate` og `slug` er obligatoriske. Bruk en gyldig kalenderdato i formatet `"YYYY-MM-DD"` (med anførselstegn). `draft` er en valgfri boolsk verdi; utelatt eller `false` betyr publisert.
+`title`, `description`, `publishedDate`, `slug`, `language` og `translationKey` er obligatoriske. Bruk en gyldig kalenderdato i formatet `"YYYY-MM-DD"` (med anførselstegn). `draft` er en valgfri boolsk verdi; utelatt eller `false` betyr publisert.
 
-Slug må være eksplisitt, unik og bestå av små ASCII-bokstaver, tall og enkeltstående bindestreker. Eksemplet får adressen `/blog/et-nytt-innlegg/`, uavhengig av filnavnet. **Behold slug når du endrer tittel eller filnavn**, slik at lenker fortsatt virker. Endret slug endrer adressen; det opprettes ikke automatiske videresendinger.
+Slug må være eksplisitt, unik innen språket og bestå av små ASCII-bokstaver, tall og enkeltstående bindestreker. Eksemplet får adressen `/no/blog/et-nytt-innlegg/`, uavhengig av filnavnet. **Behold slug når du endrer tittel eller filnavn**, slik at lenker fortsatt virker. Endret slug endrer adressen; det opprettes ikke automatiske videresendinger.
 
-Forsiden viser publiserte innlegg med nyeste dato først. Ved lik dato sorteres de etter slug. En fremtidig dato er ikke tidsstyrt publisering; bruk `draft: true` til innlegget skal vises. Utkast listes ikke og får ingen generert side, heller ikke lokalt. Les utkast i Markdown-editoren, eller fjern `draft: true` lokalt for forhåndsvisning og sett det tilbake før du sender endringen.
+Hver forside viser bare publiserte innlegg på sitt språk, med nyeste dato først. Ved lik dato sorteres de etter slug. En fremtidig dato er ikke tidsstyrt publisering; bruk `draft: true` til innlegget skal vises. Utkast listes ikke og får ingen generert side, heller ikke lokalt. Les utkast i Markdown-editoren, eller fjern `draft: true` lokalt for forhåndsvisning og sett det tilbake før du sender endringen.
 
-Duplikate slugs **stopper byggingen**, også mellom utkast. Loaderen beholder filnavnet som intern ID, slik at innlegg med samme slug ikke overskriver hverandre før valideringen. Forsiden og innleggssidene bruker samme publiseringsfunksjon i `src/lib/blog.ts`.
+Duplikate slugs **innen samme språk stopper byggingen**, også mellom utkast. Samme slug kan brukes på forskjellige språk fordi adressene er forskjellige. Duplikate `translationKey` innen samme språk stopper også byggingen; en oversettelsesgruppe kan ha maksimalt én fil per språk. Loaderen beholder filnavnet som intern ID, slik at innlegg ikke overskriver hverandre før valideringen. Forsiden og innleggssidene bruker samme publiseringsfunksjon i `src/lib/blog.ts`.
 
 Utkast er ikke hemmelige: Markdown-filene er synlige for alle som har tilgang til repositoryet. Ikke legg inn sensitivt innhold. Bruk `##` som første overskriftsnivå i innholdet; sidemalen lager `h1` fra tittelen. Bilder i `public/images/` kan refereres til som `![Beskrivende alternativ tekst](/images/bilde.jpg)`.
+
+## Språk og oversettelser
+
+Engelsk (`en`) er standardspråket på `/` og `/blog/<slug>/`. Norsk bokmål (`nb`) ligger på `/no/` og `/no/blog/<slug>/`; URL-prefixen `no` endrer ikke språkkoden `nb` i metadata og HTML. Norske innlegg flyttes dermed fra de opprinnelige adressene; det opprettes ikke automatiske videresendinger. Språkbytte er vanlige lenker med flagg og språknavn, utformet som knapper. Det krever ikke React, JavaScript, informasjonskapsler eller automatisk omdirigering basert på nettleserspråk.
+
+Grensesnittet oversettes i `src/i18n/nb.ts` og `src/i18n/en.ts`. Den norske ordlisten definerer `Messages`-typen, og andre ordlister må oppfylle den. TypeScript melder fra om manglende eller ukjente tekstnøkler. Datovisning, HTML-`lang` og Open Graph-locale følger språket.
+
+Innlegg oversettes manuelt til egne Markdown-filer. Opprett for eksempel `src/content/blog/en/my-new-post.md` med:
+
+```yaml
+title: "My new post"
+description: "A short English description."
+publishedDate: "2026-10-03"
+slug: "my-new-post"
+language: "en"
+translationKey: "my-new-post"
+draft: true
+```
+
+Legg metadataene mellom `---` i starten av filen, som i eksemplet over, og skriv engelsk Markdown etterpå. **Samme innlegg på forskjellige språk må ha samme stabile `translationKey`**. Den er en intern kobling, ikke en URL, og følger samme tegnregler som slug. Slug og publiseringsdato kan være forskjellige per språk. Mappene er bare organisering; `language` i metadata bestemmer språket.
+
+Språkvelgeren går direkte til innleggets publiserte oversettelse. Hvis den mangler eller er et utkast, viser lenken en tydelig melding og går til det språkets forside. Innlegg kan publiseres uavhengig; vi viser aldri norsk tekst som om den var engelsk. SEO bruker canonical per side og gjensidige `hreflang`-lenker bare mellom publiserte oversettelser, ikke til manglende oversettelser eller utkast.
+
+GitHub Pages bruker én `/404.html` for alle ukjente adresser, også under `/no/`. Denne siden har engelsk som hovedspråk og feilmelding og hjemlenke på begge språk, med riktig `lang` på hver tekstdel. Et nytt språk tas automatisk med i 404-innholdet.
+
+### Legge til et språk
+
+1. Legg til språkkoden i `supportedLocales` i `src/i18n/index.ts`.
+2. Opprett en ordliste, for eksempel `src/i18n/de.ts`, med `satisfies Messages`. Importer den og legg til en registrering i `languages` med språknavn, flagg, unik URL-prefix, dato-locale, Open Graph-locale og ordliste. Bare engelsk skal ha tom prefix; behold eksisterende prefix for stabile adresser.
+3. Opprett oversatte Markdown-filer med den nye `language`-verdien og samme `translationKey` som originalen.
+4. Kjør `npm run check`, `npm test` og `npm run build`.
+
+Den felles ruten `src/pages/[...path].astro` genererer forsider og publiserte innlegg for alle registrerte språk. Språkvelger, metadata og sidemaler trenger ingen egne kopier. DNS og GitHub Pages-oppsettet er uendret.
 
 ## GitHub Actions og Pages
 

@@ -1,0 +1,42 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { languages, postPath, type Locale } from '../i18n';
+import { formatDate } from '../lib/blog';
+
+interface Props {
+  locale: Locale;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { locale, posts } = Astro.props;
+const messages = languages[locale].messages;
+---
+
+<BaseLayout locale={locale} title={messages.homeTitle} description={messages.homeDescription}>
+  <section class="intro" aria-labelledby="page-title">
+    <p class="eyebrow">{messages.eyebrow}</p>
+    <h1 id="page-title">{messages.greeting}</h1>
+    <p>{messages.introduction}</p>
+  </section>
+  <section aria-labelledby="posts-title">
+    <h2 id="posts-title">{messages.latestPosts}</h2>
+    {posts.length === 0 ? (
+      <p>{messages.emptyPosts}</p>
+    ) : (
+      <ul class="post-list">
+        {posts.map((post) => (
+          <li>
+            <article>
+              <time datetime={post.data.publishedDate.toISOString().slice(0, 10)}>
+                {formatDate(post.data.publishedDate, locale)}
+              </time>
+              <h3><a href={postPath(locale, post.data.slug)}>{post.data.title}</a></h3>
+              <p>{post.data.description}</p>
+            </article>
+          </li>
+        ))}
+      </ul>
+    )}
+  </section>
+</BaseLayout>

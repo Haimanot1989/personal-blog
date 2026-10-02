@@ -3,6 +3,8 @@ title: "Velkommen til bloggen"
 description: "Et lite sted for notater om kode, teknologi og det jeg lærer underveis."
 publishedDate: "2026-10-02"
 slug: "velkommen"
+language: "nb"
+translationKey: "welcome"
 ---
 
 Dette er starten på min personlige blogg. Her vil jeg samle erfaringer,
