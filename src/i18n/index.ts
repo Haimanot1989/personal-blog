@@ -35,3 +35,22 @@ export function postPath(locale: Locale, slug: string): string {
 export function homeAlternates(): Alternate[] {
   return supportedLocales.map((locale) => ({ locale, href: homePath(locale) }));
 }
+
+export const sections = ['writing', 'topics', 'talks', 'about'] as const;
+export type Section = (typeof sections)[number];
+
+export function sectionPath(locale: Locale, section: Section): string {
+  return `${homePath(locale)}${section}/`;
+}
+
+export function topicPath(locale: Locale, topic: string): string {
+  return `${sectionPath(locale, 'topics')}${topic}/`;
+}
+
+export function talkPath(locale: Locale, slug: string): string {
+  return `${sectionPath(locale, 'talks')}${slug}/`;
+}
+
+export function sectionAlternates(section: Section): Alternate[] {
+  return supportedLocales.map((locale) => ({ locale, href: sectionPath(locale, section) }));
+}

@@ -26,6 +26,18 @@ Prosjektet bruker `astro/tsconfigs/strictest`. Alle sider er statisk HTML med re
 
 ## Nye innlegg
 
+Du kan kopiere `src/content/blog/en/learning-note-template.md` for å starte et
+engelsk læringsnotat. Malen har `draft: true` og publiseres ikke. Gi kopien et
+nytt filnavn, en unik `slug` og `translationKey`, og oppdater øvrige metadata
+og tekst før du publiserer. Hvis du fyller ut `sources` i metadata, fjern
+malens `## Sources`-seksjon for å unngå to kildelister.
+
+Bloggen er en læringsdagbok, organisert etter **tema**, ikke etter hvor ideen kom fra.
+Navigasjonen er Innlegg, Temaer, Foredrag og Om meg. Forsiden viser de fem nyeste
+innleggene og lenker til temaene; `/writing/` og `/no/writing/` viser alle innlegg.
+Temaoversiktene ligger på `/topics/` og `/no/topics/`. Innleggenes eksisterende
+`/blog/<slug>/`-adresser er uendret.
+
 Opprett en Markdown-fil i `src/content/blog/`, for eksempel `et-nytt-innlegg.md`:
 
 ```markdown
@@ -36,21 +48,77 @@ publishedDate: "2026-10-03"
 slug: "et-nytt-innlegg"
 language: "nb"
 translationKey: "my-new-post"
+topic: "software-design"
+format: "learning-note"
+tags:
+  - modularity
+sources:
+  - title: "A Philosophy of Software Design"
+    type: "book"
+    author: "John Ousterhout"
+    locator: "Kapittelet jeg skriver om"
 draft: true
 ---
 
-Innledningen til innlegget.
+## Spørsmålet
+Hva prøver jeg å forstå?
 
-## En overskrift
+## Min forståelse
+Forklar ideen med egne ord.
 
-Resten av teksten. Bruk beskrivende lenketekster og alternativ tekst på bilder.
+## Et konkret eksempel
+Vis kode, et diagram eller en realistisk situasjon.
+
+## Hvor dette kan hjelpe, og hvor det ikke passer
+Beskriv bruksområder, forutsetninger og avveininger.
+
+## Hva jeg vil prøve
+Beskriv ett lite eksperiment eller noe jeg vil observere.
 ```
 
-`title`, `description`, `publishedDate`, `slug`, `language` og `translationKey` er obligatoriske. Bruk en gyldig kalenderdato i formatet `"YYYY-MM-DD"` (med anførselstegn). `draft` er en valgfri boolsk verdi; utelatt eller `false` betyr publisert.
+`title`, `description`, `publishedDate`, `slug`, `language`, `translationKey`,
+`topic` og `format` er obligatoriske. Bruk en gyldig kalenderdato i formatet
+`"YYYY-MM-DD"` (med anførselstegn). `draft` er en valgfri boolsk verdi;
+utelatt eller `false` betyr publisert.
+
+### Tema, format og kilder
+
+Velg ett hovedtema. Verdiene defineres i `src/lib/taxonomy.ts` og vises med
+oversatte navn fra `src/i18n/`:
+
+| `topic` | Tema |
+|---|---|
+| `software-architecture` | Programvarearkitektur |
+| `software-design` | Programvaredesign |
+| `computer-science` | Informatikk |
+| `ai-developer-tools` | KI og utviklerverktøy |
+| `frontend-engineering` | Frontend-utvikling |
+| `learning-cognition` | Læring og kognisjon |
+| `engineering-leadership` | Teknologiledelse |
+
+`format` beskriver hva slags tekst leseren får: `learning-note` (én idé forklart
+med egne ord), `reflection` (spørsmål og forbindelser), `practice-report`
+(det du faktisk prøvde og observerte), eller `review` (vurdering av en hel ressurs).
+Bokomtaler ligger i samme samling som andre innlegg, ikke i en egen bokmappe.
+
+`tags` er valgfritt: inntil fem unike, presise stikkord med små ASCII-bokstaver,
+tall og enkeltstående bindestreker, for eksempel `ddd` eller `working-memory`.
+De vises som tekst; temaene, ikke stikkordene, har egne oversiktssider.
+
+`sources` er en valgfri liste. Hver kilde har `title` og `type` (`book`, `course`,
+`video`, `podcast` eller `article`). `author`, `locator` (kapittel, episode eller
+tidskode) og `url` er valgfrie. URL må bruke HTTP eller HTTPS; en bok trenger
+ikke en lenke. Kildelisten vises automatisk etter innholdet, så du trenger ikke
+gjenta den i Markdown. Et innlegg kan ha kilder av flere typer.
+
+Skriv gjerne én idé per læringsnotat. Knytt senere notater sammen med vanlige
+Markdown-lenker, og legg til daterte oppdateringer eller en praksisrapport når
+du prøver ideen. Skill tydelig mellom noe du tror kan hjelpe og noe du har
+observert i praksis. Ikke publiser fortrolig kode eller detaljer fra arbeid.
 
 Slug må være eksplisitt, unik innen språket og bestå av små ASCII-bokstaver, tall og enkeltstående bindestreker. Eksemplet får adressen `/no/blog/et-nytt-innlegg/`, uavhengig av filnavnet. **Behold slug når du endrer tittel eller filnavn**, slik at lenker fortsatt virker. Endret slug endrer adressen; det opprettes ikke automatiske videresendinger.
 
-Hver forside viser bare publiserte innlegg på sitt språk, med nyeste dato først. Ved lik dato sorteres de etter slug. En fremtidig dato er ikke tidsstyrt publisering; bruk `draft: true` til innlegget skal vises. Utkast listes ikke og får ingen generert side, heller ikke lokalt. Les utkast i Markdown-editoren, eller fjern `draft: true` lokalt for forhåndsvisning og sett det tilbake før du sender endringen.
+Alle oversikter viser bare publiserte innlegg på sitt språk, med nyeste dato først. Ved lik dato sorteres de etter slug. En fremtidig dato er ikke tidsstyrt publisering; bruk `draft: true` til innlegget skal vises. Utkast listes ikke, telles ikke på temasidene og får ingen generert side, heller ikke lokalt. Les utkast i Markdown-editoren, eller fjern `draft: true` lokalt for forhåndsvisning og sett det tilbake før du sender endringen.
 
 Duplikate slugs **innen samme språk stopper byggingen**, også mellom utkast. Samme slug kan brukes på forskjellige språk fordi adressene er forskjellige. Duplikate `translationKey` innen samme språk stopper også byggingen; en oversettelsesgruppe kan ha maksimalt én fil per språk. Loaderen beholder filnavnet som intern ID, slik at innlegg ikke overskriver hverandre før valideringen. Forsiden og innleggssidene bruker samme publiseringsfunksjon i `src/lib/blog.ts`.
 
@@ -71,6 +139,8 @@ publishedDate: "2026-10-03"
 slug: "my-new-post"
 language: "en"
 translationKey: "my-new-post"
+topic: "software-design"
+format: "learning-note"
 draft: true
 ```
 
@@ -87,7 +157,48 @@ GitHub Pages bruker én `/404.html` for alle ukjente adresser, også under `/no/
 3. Opprett oversatte Markdown-filer med den nye `language`-verdien og samme `translationKey` som originalen.
 4. Kjør `npm run check`, `npm test` og `npm run build`.
 
-Den felles ruten `src/pages/[...path].astro` genererer forsider og publiserte innlegg for alle registrerte språk. Språkvelger, metadata og sidemaler trenger ingen egne kopier. DNS og GitHub Pages-oppsettet er uendret.
+Den felles ruten `src/pages/[...path].astro` genererer forsider, oversikter,
+temasider, innlegg og foredrag for alle registrerte språk. Språkbytte på en
+oversikt går til den samme oversikten på det andre språket. Om meg-teksten
+ligger i ordlistene. DNS og GitHub Pages-oppsettet er uendret.
+
+## Foredrag
+
+`/talks/` og `/no/talks/` har en tomtilstand til du publiserer et foredrag.
+Opprett en Markdown-fil i `src/content/talks/`, for eksempel `en/deep-modules.md`:
+
+```markdown
+---
+title: "Understanding deep modules"
+description: "An abstract explaining the problem and what the audience will learn."
+publishedDate: "2026-10-05"
+slug: "deep-modules"
+language: "en"
+translationKey: "deep-modules-talk"
+topic: "software-design"
+event: "Name of the event"
+slides: "https://example.com/slides"
+recording: "https://example.com/recording"
+relatedPosts:
+  - my-new-post
+draft: true
+---
+
+## Abstract
+Describe the question, your central claim, examples, and limitations.
+```
+
+Foredrag bruker samme obligatoriske metadata som innlegg, unntatt `format`.
+`event`, `slides`, `recording` og `relatedPosts` er valgfrie. Utelat eksempel-URL-ene
+hvis materiell ikke er tilgjengelig. `publishedDate` er publiseringsdatoen for
+siden; eventuelle arrangementsdatoer kan du beskrive i teksten.
+
+`relatedPosts` refererer til innleggenes stabile **translationKey**, ikke slug
+eller filnavn. Ukjente nøkler stopper byggingen. Bare publiserte innlegg på
+foredragets språk vises som relaterte innlegg; utkast og manglende oversettelser
+vises ikke. Oversatte foredrag deler sin egen `translationKey` og får gjensidige
+språklenker. Slugs og oversettelsesnøkler valideres innen hver samling, også
+for utkast. Et engelsk foredrag får adressen `/talks/deep-modules/`.
 
 ## GitHub Actions og Pages
 

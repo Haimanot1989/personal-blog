@@ -1,0 +1,32 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { languages, postPath, type Locale } from '../i18n';
+import { formatDate } from '../lib/blog';
+import PostLabels from './PostLabels.astro';
+
+interface Props {
+  locale: Locale;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { locale, posts } = Astro.props;
+---
+
+{posts.length === 0 ? (
+  <p>{languages[locale].messages.emptyPosts}</p>
+) : (
+  <ul class="post-list">
+    {posts.map((post) => (
+      <li>
+        <article>
+          <time datetime={post.data.publishedDate.toISOString().slice(0, 10)}>
+            {formatDate(post.data.publishedDate, locale)}
+          </time>
+          <h3><a href={postPath(locale, post.data.slug)}>{post.data.title}</a></h3>
+          <PostLabels post={post} />
+          <p>{post.data.description}</p>
+        </article>
+      </li>
+    ))}
+  </ul>
+)}

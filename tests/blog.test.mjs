@@ -16,32 +16,37 @@ function post(overrides = {}) {
     publishedDate: '2026-01-01',
     slug: 'fixture-post',
     language: 'nb',
+    topic: 'software-design',
+    format: 'learning-note',
     ...overrides,
   };
   return { translationKey: metadata.slug, ...metadata };
 }
 
-async function withBuild(entries, inspect) {
+async function withBuild(entries, inspect, talkEntries = []) {
   const directory = await mkdtemp(join(tmpdir(), 'personal-blog-test-'));
   try {
     for (const path of ['src', 'public', 'astro.config.mjs', 'tsconfig.json', 'package.json']) {
       await cp(join(root, path), join(directory, path), {
         recursive: true,
-        filter: (source) => resolve(source) !== resolve(root, 'src/content/blog'),
+        filter: (source) => !['src/content/blog', 'src/content/talks']
+          .some((path) => resolve(source) === resolve(root, path)),
       });
     }
     await symlink(join(root, 'node_modules'), join(directory, 'node_modules'), 'dir');
-    const contentDirectory = join(directory, 'src/content/blog');
-    await mkdir(contentDirectory, { recursive: true });
-    for (const [filename, metadata] of entries) {
-      const frontmatter = Object.entries(metadata)
-        .filter(([, value]) => value !== undefined)
-        .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
-        .join('\n');
-      await writeFile(
-        join(contentDirectory, filename),
-        `---\n${frontmatter}\n---\n\n## Fixture content\n\nMarkdown renders here.\n`,
-      );
+    for (const [collection, fixtures] of [['blog', entries], ['talks', talkEntries]]) {
+      const contentDirectory = join(directory, 'src/content', collection);
+      await mkdir(contentDirectory, { recursive: true });
+      for (const [filename, metadata] of fixtures) {
+        const frontmatter = Object.entries(metadata)
+          .filter(([, value]) => value !== undefined)
+          .map(([key, value]) => `${key}: ${JSON.stringify(value)}`)
+          .join('\n');
+        await writeFile(
+          join(contentDirectory, filename),
+          `---\n${frontmatter}\n---\n\n## Fixture content\n\nMarkdown renders here.\n`,
+        );
+      }
     }
     const result = spawnSync(process.execPath, [cli, 'build'], {
       cwd: directory,
@@ -126,6 +131,16 @@ const invalidMetadata = [
   ['missing language', { language: undefined }, /language/],
   ['unsupported language', { language: 'fr' }, /language/],
   ['missing translation key', { translationKey: undefined }, /translationKey/],
+  ['missing topic', { topic: undefined }, /topic/],
+  ['unknown topic', { topic: 'books' }, /topic/],
+  ['missing format', { format: undefined }, /format/],
+  ['unknown format', { format: 'podcast' }, /format/],
+  ['unsafe tag', { tags: ['../unsafe'] }, /tags/],
+  ['duplicate tags', { tags: ['ddd', 'ddd'] }, /tags/],
+  ['too many tags', { tags: ['a', 'b', 'c', 'd', 'e', 'f'] }, /tags/],
+  ['unknown source type', { sources: [{ title: 'Source', type: 'unknown' }] }, /sources/],
+  ['unsafe source URL', { sources: [{ title: 'Source', type: 'book', url: 'javascript:alert(1)' }] }, /HTTP or HTTPS/],
+  ['malformed source URL', { sources: [{ title: 'Source', type: 'video', url: 'not-a-url' }] }, /sources/],
 ];
 
 for (const [label, overrides, expectedError] of invalidMetadata) {
@@ -180,7 +195,7 @@ test('translations have localized pages, reciprocal alternates and language-pres
           assert.match(english, /property="og:locale" content="en_GB"/);
           assert.match(english, /property="og:locale:alternate" content="nb_NO"/);
           assert.match(english, /1 January 2026/);
-          assert.match(english, /href="\/"[^>]*>All posts/);
+          assert.match(english, /href="\/writing\/"[^>]*>All writing/);
           assert.match(english, /href="\/no\/blog\/norsk-slug\/" hreflang="nb"/);
           assert.match(norwegian, /href="\/blog\/english-slug\/" hreflang="en"/);
           assert.match(untranslated, /href="\/" hreflang="en"/);
@@ -204,6 +219,152 @@ test('translations have localized pages, reciprocal alternates and language-pres
         },
       );
     });
+
+    test('journal pages browse localized topics, show labels and sources, and keep all writing available', async () => {
+      await withBuild(
+        [
+          ...Array.from({ length: 6 }, (_, index) => [`note-${index}.md`, post({
+            language: 'en', slug: `note-${index}`, title: `Note ${index}`,
+            publishedDate: `2026-01-0${index + 1}`,
+          })]),
+          ['architecture.md', post({
+            language: 'en', slug: 'architecture', title: 'Architecture example',
+            topic: 'software-architecture', format: 'practice-report',
+            tags: ['trade-offs', 'modularity'],
+            sources: [
+              { title: 'Architecture book', type: 'book', author: 'An author', locator: 'Chapter 3' },
+              { title: 'Course example', type: 'course', url: 'https://example.com/course' },
+              { title: 'Podcast example', type: 'podcast', url: 'https://example.com/podcast' },
+            ],
+          })],
+          ['norwegian.md', post({ slug: 'norsk', title: 'Norsk notat' })],
+          ['draft.md', post({ language: 'en', slug: 'hidden', title: 'Hidden note', draft: true })],
+        ],
+        async ({ status, output, dist }) => {
+          assert.equal(status, 0, output);
+          const home = await readFile(join(dist, 'index.html'), 'utf8');
+          const writing = await readFile(join(dist, 'writing/index.html'), 'utf8');
+          const topics = await readFile(join(dist, 'topics/index.html'), 'utf8');
+          const design = await readFile(join(dist, 'topics/software-design/index.html'), 'utf8');
+          const architecture = await readFile(join(dist, 'topics/software-architecture/index.html'), 'utf8');
+          const norwegian = await readFile(join(dist, 'no/topics/software-design/index.html'), 'utf8');
+          const emptyTopic = await readFile(join(dist, 'topics/computer-science/index.html'), 'utf8');
+          const article = await readFile(join(dist, 'blog/architecture/index.html'), 'utf8');
+          const about = await readFile(join(dist, 'about/index.html'), 'utf8');
+          const talks = await readFile(join(dist, 'talks/index.html'), 'utf8');
+          assert.equal((home.match(/<article>/g) ?? []).length, 5);
+          assert.equal((writing.match(/<article>/g) ?? []).length, 7);
+          assert.ok(writing.indexOf('/blog/note-5/') < writing.indexOf('/blog/note-0/'));
+          assert.match(topics, /Writing: 6/);
+          assert.match(design, /Note 0/);
+          assert.doesNotMatch(design, /Architecture example|Norsk notat|Hidden note/);
+          assert.match(architecture, /Architecture example/);
+          assert.doesNotMatch(architecture, /Note 0/);
+          assert.match(norwegian, /Norsk notat/);
+          assert.match(norwegian, /Programvaredesign/);
+          assert.doesNotMatch(norwegian, /Note 0/);
+          assert.match(design, /href="\/no\/topics\/software-design\/" hreflang="nb"/);
+          assert.match(design, /rel="canonical" href="https:\/\/haimanot\.dev\/topics\/software-design\/"/);
+          assert.match(norwegian, /rel="alternate" hreflang="en" href="https:\/\/haimanot\.dev\/topics\/software-design\/"/);
+          assert.match(emptyTopic, /There are no published posts yet/);
+          assert.match(article, /Practice report/);
+          assert.match(article, /trade-offs, modularity/);
+          assert.match(article, /<cite>Architecture book<\/cite>/);
+          assert.match(article, /An author/);
+          assert.match(article, /Chapter 3/);
+          assert.match(article, /href="https:\/\/example\.com\/course"/);
+          assert.match(article, /Podcast example/);
+          assert.match(about, /understand and remember/);
+          assert.match(about, /href="\/no\/about\/" hreflang="nb"/);
+          assert.match(talks, /No talks published yet/);
+          for (const html of [home, writing, topics, design, architecture, norwegian, about, talks]) {
+            assert.doesNotMatch(html, /<script\b|Hidden note|\/blog\/hidden\//);
+            assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
+          }
+          for (const section of ['writing', 'topics', 'talks', 'about']) {
+            assert.match(writing, new RegExp(`href="/${section}/"`));
+            const localized = await readFile(join(dist, 'no', section, 'index.html'), 'utf8');
+            assert.match(localized, /<html lang="nb">/);
+            assert.match(localized, new RegExp(`href="/no/${section}/"`));
+          }
+        },
+      );
+    });
+
+    test('talks render materials and localized published related writing without exposing drafts', async () => {
+      await withBuild(
+        [
+          ['english.md', post({ language: 'en', slug: 'learning', translationKey: 'shared-note' })],
+          ['norwegian.md', post({ slug: 'laering', translationKey: 'shared-note' })],
+          ['draft.md', post({ language: 'en', slug: 'secret-note', draft: true })],
+        ],
+        async ({ status, output, dist }) => {
+          assert.equal(status, 0, output);
+          const english = await readFile(join(dist, 'talks/design-talk/index.html'), 'utf8');
+          const norwegian = await readFile(join(dist, 'no/talks/designforedrag/index.html'), 'utf8');
+          const untranslated = await readFile(join(dist, 'talks/english-only/index.html'), 'utf8');
+          const index = await readFile(join(dist, 'talks/index.html'), 'utf8');
+          const topic = await readFile(join(dist, 'topics/software-design/index.html'), 'utf8');
+          assert.match(english, /Fixture content/);
+          assert.match(english, /href="https:\/\/example\.com\/slides">Slides/);
+          assert.match(english, /href="https:\/\/example\.com\/recording">Recording/);
+          assert.match(english, /Example meetup/);
+          assert.match(english, /href="\/blog\/learning\/"/);
+          assert.doesNotMatch(english, /secret-note|\/no\/blog\/laering\//);
+          assert.match(norwegian, /href="\/no\/blog\/laering\/"/);
+          assert.match(norwegian, /Relaterte innlegg/);
+          for (const html of [english, norwegian]) {
+            assert.match(html, /rel="alternate" hreflang="en" href="https:\/\/haimanot\.dev\/talks\/design-talk\/"/);
+            assert.match(html, /rel="alternate" hreflang="nb" href="https:\/\/haimanot\.dev\/no\/talks\/designforedrag\/"/);
+            assert.doesNotMatch(html, /<script\b/);
+            assert.equal((html.match(/<h1\b/g) ?? []).length, 1);
+          }
+          assert.match(untranslated, /Translation unavailable; go to homepage/);
+          assert.doesNotMatch(untranslated, /secret-translation|rel="alternate" hreflang="nb"/);
+          assert.doesNotMatch(index, /secret-translation/);
+          assert.match(topic, /href="\/talks\/design-talk\/"/);
+          assert.doesNotMatch(topic, /secret-translation|\/no\/talks\/designforedrag\//);
+          await assert.rejects(readFile(join(dist, 'no/talks/secret-translation/index.html')), { code: 'ENOENT' });
+        },
+        [
+          ['english.md', post({
+            language: 'en', slug: 'design-talk', translationKey: 'shared-talk', event: 'Example meetup',
+            slides: 'https://example.com/slides', recording: 'https://example.com/recording',
+            relatedPosts: ['shared-note', 'secret-note'],
+          })],
+          ['norwegian.md', post({
+            slug: 'designforedrag', translationKey: 'shared-talk', relatedPosts: ['shared-note'],
+          })],
+          ['untranslated.md', post({ language: 'en', slug: 'english-only', translationKey: 'unfinished-talk' })],
+          ['draft.md', post({ slug: 'secret-translation', translationKey: 'unfinished-talk', draft: true })],
+        ],
+      );
+    });
+
+    for (const [label, entries, error] of [
+      ['duplicate slug including drafts', [
+        ['first.md', post()], ['second.md', post({ draft: true })],
+      ], /Duplicate talks slug/],
+      ['duplicate translation key', [
+        ['first.md', post()], ['second.md', post({ slug: 'second', translationKey: 'fixture-post' })],
+      ], /Duplicate translationKey/],
+      ['missing related post', [
+        ['invalid.md', post({ relatedPosts: ['missing-post'] })],
+      ], /Unknown relatedPosts translationKey/],
+      ['unsafe slides URL', [
+        ['invalid.md', post({ slides: 'javascript:alert(1)' })],
+      ], /HTTP or HTTPS/],
+      ['unsafe recording URL', [
+        ['invalid.md', post({ recording: 'data:text/html,unsafe' })],
+      ], /HTTP or HTTPS/],
+    ]) {
+      test(`invalid talk fails the build: ${label}`, async () => {
+        await withBuild([], ({ status, output }) => {
+          assert.notEqual(status, 0, output);
+          assert.match(output, error);
+        }, entries);
+      });
+    }
 
 test('two versions of a translation in the same language fail even when one is a draft', async () => {
       await withBuild(

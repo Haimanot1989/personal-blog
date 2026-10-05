@@ -1,0 +1,47 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { languages, sectionPath, topicPath, type Alternate } from '../i18n';
+import { formatDate } from '../lib/blog';
+import PostList from './PostList.astro';
+
+interface Props {
+  talk: CollectionEntry<'talks'>;
+  alternates: Alternate[];
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { talk, alternates, posts } = Astro.props;
+const locale = talk.data.language;
+const messages = languages[locale].messages;
+const { Content } = await render(talk);
+const related = posts.filter((post) =>
+  post.data.language === locale && talk.data.relatedPosts.includes(post.data.translationKey));
+---
+
+<BaseLayout locale={locale} alternates={alternates} title={talk.data.title}
+  description={talk.data.description} publishedDate={talk.data.publishedDate}>
+  <article>
+    <header class="post-header">
+      <a class="back-link" href={sectionPath(locale, 'talks')}>{messages.allTalks}</a>
+      <h1>{talk.data.title}</h1>
+      <p class="post-description">{talk.data.description}</p>
+      <time datetime={talk.data.publishedDate.toISOString().slice(0, 10)}>{formatDate(talk.data.publishedDate, locale)}</time>
+      {talk.data.event && <p>{talk.data.event}</p>}
+      <p><a href={topicPath(locale, talk.data.topic)}>{messages.topicNames[talk.data.topic]}</a></p>
+    </header>
+    <div class="prose"><Content /></div>
+    {(talk.data.slides || talk.data.recording) && (
+      <ul class="talk-resources">
+        {talk.data.slides && <li><a href={talk.data.slides}>{messages.slides}</a></li>}
+        {talk.data.recording && <li><a href={talk.data.recording}>{messages.recording}</a></li>}
+      </ul>
+    )}
+    {related.length > 0 && (
+      <section aria-labelledby="related-title">
+        <h2 id="related-title">{messages.relatedWriting}</h2>
+        <PostList locale={locale} posts={related} />
+      </section>
+    )}
+  </article>
+</BaseLayout>

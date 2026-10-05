@@ -1,0 +1,23 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { languages, topicPath, type Locale } from '../i18n';
+import { topics } from '../lib/taxonomy';
+
+interface Props {
+  locale: Locale;
+  posts: CollectionEntry<'blog'>[];
+}
+
+const { locale, posts } = Astro.props;
+const messages = languages[locale].messages;
+---
+
+<ul class="topic-list">
+  {topics.map((topic) => (
+    <li>
+      <h3><a href={topicPath(locale, topic)}>{messages.topicNames[topic]}</a></h3>
+      <p>{messages.topicDescriptions[topic]}</p>
+      <span class="eyebrow">{messages.writing}: {posts.filter((post) => post.data.topic === topic).length}</span>
+    </li>
+  ))}
+</ul>

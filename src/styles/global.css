@@ -161,6 +161,71 @@ time,
   font-size: 0.9375rem;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.site-header > nav:not(.language-switcher) {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+nav a[aria-current="page"] {
+  font-weight: 700;
+}
+
+.post-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0.75rem 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.post-labels > div {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.post-labels dd {
+  margin: 0;
+}
+
+.topic-section,
+.sources {
+  margin-top: 3rem;
+}
+
+.topic-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.topic-list li {
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.topic-list p {
+  margin-bottom: 0.5rem;
+}
+
+.section-link {
+  margin-top: 1.5rem;
+}
+
 .eyebrow {
   margin-bottom: 0.75rem;
 }

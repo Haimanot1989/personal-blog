@@ -5,6 +5,8 @@ publishedDate: "2026-10-02"
 slug: "velkommen"
 language: "nb"
 translationKey: "welcome"
+topic: "learning-cognition"
+format: "reflection"
 ---
 
 Dette er starten på min personlige blogg. Her vil jeg samle erfaringer,

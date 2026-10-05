@@ -1,0 +1,29 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { languages, topicPath } from '../i18n';
+
+interface Props {
+  post: CollectionEntry<'blog'>;
+}
+
+const { post } = Astro.props;
+const { language: locale, topic, format, tags } = post.data;
+const messages = languages[locale].messages;
+---
+
+<dl class="post-labels">
+  <div>
+    <dt class="visually-hidden">{messages.topicLabel}</dt>
+    <dd><a href={topicPath(locale, topic)}>{messages.topicNames[topic]}</a></dd>
+  </div>
+  <div>
+    <dt class="visually-hidden">{messages.formatLabel}</dt>
+    <dd>{messages.formatNames[format]}</dd>
+  </div>
+  {tags.length > 0 && (
+    <div>
+      <dt>{messages.tagsLabel}:</dt>
+      <dd>{tags.join(', ')}</dd>
+    </div>
+  )}
+</dl>

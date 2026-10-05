@@ -2,11 +2,15 @@
 import type { CollectionEntry } from 'astro:content';
 import HomePage from '../components/HomePage.astro';
 import PostPage from '../components/PostPage.astro';
-import { homePath, postPath, supportedLocales, type Alternate, type Locale } from '../i18n';
-import { getPostAlternates, getPublishedPosts } from '../lib/blog';
+import JournalPage from '../components/JournalPage.astro';
+import TalkPage from '../components/TalkPage.astro';
+import { homePath, postPath, sectionPath, sections, supportedLocales, talkPath, topicPath, type Alternate, type Locale, type Section } from '../i18n';
+import { getPostAlternates, getPublishedPosts, getPublishedTalks, getTalkAlternates } from '../lib/blog';
+import { topics, type Topic } from '../lib/taxonomy';
 
 export async function getStaticPaths() {
   const posts = await getPublishedPosts();
+  const talks = await getPublishedTalks();
   return [
     ...supportedLocales.map((locale) => ({
       params: { path: homePath(locale).slice(1, -1) || undefined },
@@ -16,18 +20,52 @@ export async function getStaticPaths() {
       params: { path: postPath(post.data.language, post.data.slug).slice(1, -1) },
       props: { kind: 'post' as const, post, alternates: getPostAlternates(post, posts) },
     })),
+    ...supportedLocales.flatMap((locale) => [
+      ...sections.map((section) => ({
+        params: { path: sectionPath(locale, section).slice(1, -1) },
+        props: {
+          kind: 'journal' as const, locale, section,
+          posts: posts.filter((post) => post.data.language === locale),
+          talks: talks.filter((talk) => talk.data.language === locale),
+        },
+      })),
+      ...topics.map((topic) => ({
+        params: { path: topicPath(locale, topic).slice(1, -1) },
+        props: {
+          kind: 'journal' as const, locale, section: 'topics' as const, topic,
+          posts: posts.filter((post) => post.data.language === locale && post.data.topic === topic),
+          talks: talks.filter((talk) => talk.data.language === locale && talk.data.topic === topic),
+        },
+      })),
+    ]),
+    ...talks.map((talk) => ({
+      params: { path: talkPath(talk.data.language, talk.data.slug).slice(1, -1) },
+      props: { kind: 'talk' as const, talk, alternates: getTalkAlternates(talk, talks), posts },
+    })),
   ];
 }
 
 type Props =
   | { kind: 'home'; locale: Locale; posts: CollectionEntry<'blog'>[] }
-  | { kind: 'post'; post: CollectionEntry<'blog'>; alternates: Alternate[] };
+  | { kind: 'post'; post: CollectionEntry<'blog'>; alternates: Alternate[] }
+  | { kind: 'journal'; locale: Locale; section: Section; topic?: Topic; posts: CollectionEntry<'blog'>[]; talks: CollectionEntry<'talks'>[] }
+  | { kind: 'talk'; talk: CollectionEntry<'talks'>; alternates: Alternate[]; posts: CollectionEntry<'blog'>[] };
 
 const props = Astro.props;
 ---
 
 {props.kind === 'home' ? (
   <HomePage locale={props.locale} posts={props.posts} />
-) : (
+) : props.kind === 'post' ? (
   <PostPage post={props.post} alternates={props.alternates} />
+) : props.kind === 'journal' ? (
+  <JournalPage
+    locale={props.locale}
+    section={props.section}
+    posts={props.posts}
+    talks={props.talks}
+    {...(props.topic ? { topic: props.topic } : {})}
+  />
+) : (
+  <TalkPage talk={props.talk} alternates={props.alternates} posts={props.posts} />
 )}

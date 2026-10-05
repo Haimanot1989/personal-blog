@@ -5,6 +5,8 @@ publishedDate: "2026-10-02"
 slug: "welcome"
 language: "en"
 translationKey: "welcome"
+topic: "learning-cognition"
+format: "reflection"
 ---
 
 This is the start of my personal blog. I'll use it to collect experiences,

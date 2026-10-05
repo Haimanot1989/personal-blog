@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
-import { defaultLocale, homeAlternates, homePath, languages, type Alternate, type Locale } from '../i18n';
+import { defaultLocale, homeAlternates, homePath, languages, sectionPath, sections, type Alternate, type Locale } from '../i18n';
 
 interface Props {
   title: string;
@@ -53,7 +53,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
     <header class="site-header">
       <a class="site-name" href={homePath(locale)}>Haimanot<span class="domain">.dev</span></a>
       <nav aria-label={messages.mainNavigation}>
-        <a href={homePath(locale)} aria-current={Astro.url.pathname === homePath(locale) ? 'page' : undefined}>{messages.blog}</a>
+        {sections.map((section) => (
+          <a href={sectionPath(locale, section)}
+            aria-current={Astro.url.pathname === sectionPath(locale, section) ? 'page' : undefined}
+          >{messages[section]}</a>
+        ))}
       </nav>
       <LanguageSwitcher locale={locale} alternates={alternates} />
     </header>

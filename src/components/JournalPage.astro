@@ -1,0 +1,55 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { languages, sectionAlternates, supportedLocales, topicPath, type Locale, type Section } from '../i18n';
+import type { Topic } from '../lib/taxonomy';
+import PostList from './PostList.astro';
+import TopicList from './TopicList.astro';
+import TalkList from './TalkList.astro';
+
+interface Props {
+  locale: Locale;
+  section: Section;
+  topic?: Topic;
+  posts: CollectionEntry<'blog'>[];
+  talks: CollectionEntry<'talks'>[];
+}
+
+const { locale, section, topic, posts, talks } = Astro.props;
+const messages = languages[locale].messages;
+const title = topic ? messages.topicNames[topic] : messages[section];
+const descriptions = {
+  writing: messages.writingDescription,
+  topics: messages.topicsDescription,
+  talks: messages.talksDescription,
+  about: messages.aboutDescription,
+};
+const description = topic ? messages.topicDescriptions[topic] : descriptions[section];
+const alternates = topic
+  ? supportedLocales.map((target) => ({ locale: target, href: topicPath(target, topic) }))
+  : sectionAlternates(section);
+---
+
+<BaseLayout locale={locale} title={title} description={description} alternates={alternates}>
+  <section class="intro" aria-labelledby="page-title">
+    <h1 id="page-title">{title}</h1>
+    <p>{description}</p>
+  </section>
+  {(section === 'writing' || topic) && (
+    <section aria-labelledby="writing-title">
+      <h2 id="writing-title">{messages.writing}</h2>
+      <PostList locale={locale} posts={posts} />
+    </section>
+  )}
+  {section === 'topics' && !topic && <TopicList locale={locale} posts={posts} />}
+  {section === 'about' && (
+    <div class="prose">{messages.aboutParagraphs.map((paragraph) => <p>{paragraph}</p>)}</div>
+  )}
+  {section === 'talks' && <TalkList locale={locale} talks={talks} />}
+  {topic && talks.length > 0 && (
+    <section class="topic-section" aria-labelledby="talks-title">
+      <h2 id="talks-title">{messages.talks}</h2>
+      <TalkList locale={locale} talks={talks} headingLevel="h3" />
+    </section>
+  )}
+</BaseLayout>
