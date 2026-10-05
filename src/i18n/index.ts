@@ -55,6 +55,14 @@ export function tagPath(locale: Locale, tag: string): string {
   return `${homePath(locale)}tags/${tag}/`;
 }
 
+export function searchPath(locale: Locale): string {
+  return `${homePath(locale)}search/`;
+}
+
+export function searchAlternates(): Alternate[] {
+  return supportedLocales.map((locale) => ({ locale, href: searchPath(locale) }));
+}
+
 export function sectionAlternates(section: Section): Alternate[] {
   return supportedLocales.map((locale) => ({ locale, href: sectionPath(locale, section) }));
 }

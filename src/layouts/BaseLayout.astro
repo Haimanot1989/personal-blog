@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import LanguageSwitcher from '../components/LanguageSwitcher.astro';
-import { defaultLocale, homeAlternates, homePath, languages, sectionPath, sections, type Alternate, type Locale } from '../i18n';
+import { defaultLocale, homeAlternates, homePath, languages, searchPath, sectionPath, sections, type Alternate, type Locale } from '../i18n';
 
 interface Props {
   title: string;
@@ -60,6 +60,11 @@ const canonical = new URL(Astro.url.pathname, Astro.site);
         ))}
       </nav>
       <LanguageSwitcher locale={locale} alternates={alternates} />
+      <form class="site-search" role="search" action={searchPath(locale)} method="get">
+        <label class="visually-hidden" for="site-search-input">{messages.searchPlaceholder}</label>
+        <input id="site-search-input" type="search" name="q" placeholder={messages.searchPlaceholder} required />
+        <button type="submit">{messages.search}</button>
+      </form>
     </header>
     <main id="main" tabindex="-1">
       <slot />

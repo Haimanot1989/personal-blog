@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { gunzipSync } from 'node:zlib';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const cli = join(root, 'node_modules/astro/bin/astro.mjs');
@@ -101,6 +102,74 @@ test('build publishes sorted posts at explicit slugs, with SEO and no drafts or 
       }
       assert.equal((await readFile(join(dist, 'CNAME'), 'utf8')).trim(), 'haimanot.dev');
     },
+  );
+});
+
+test('search indexes full published content by language without drafts or duplicate listings', async () => {
+  await withBuild(
+    [
+      ['english.md', post({
+        language: 'en', slug: 'searchable-note', title: 'Searchable note',
+        tags: ['bounded-context'],
+        sources: [{ title: 'Distinctive source', type: 'book', author: 'Example author' }],
+      })],
+      ['norwegian.md', post({ slug: 'norsk-notat', title: 'Norsk notat' })],
+      ['draft.md', post({ language: 'en', slug: 'hidden-note', title: 'Unpublished secret', draft: true })],
+    ],
+    async ({ status, output, dist }) => {
+      assert.equal(status, 0, output);
+      const english = await readFile(join(dist, 'search/index.html'), 'utf8');
+      const norwegian = await readFile(join(dist, 'no/search/index.html'), 'utf8');
+      assert.match(english, /action="\/search\/" method="get"/);
+      assert.match(norwegian, /action="\/no\/search\/" method="get"/);
+      assert.match(english, /type="search" name="q"/);
+      assert.match(english, /placeholder="Search this journal"/);
+      assert.match(norwegian, /placeholder="Søk i læringsdagboken"/);
+      for (const html of [english, norwegian]) {
+        assert.equal((html.match(/type="search"/g) ?? []).length, 1);
+        assert.doesNotMatch(html, /<pagefind-input\b/);
+      }
+      assert.match(english, /src="\/search\.js"/);
+      assert.match(english, /<noscript>/);
+      assert.match(english, /data-search-error role="alert" hidden/);
+      assert.match(english, /href="\/no\/search\/" hreflang="nb"/);
+      assert.match(norwegian, /href="\/search\/" hreflang="en"/);
+      const result = spawnSync(process.execPath, [
+        join(root, 'node_modules/pagefind/lib/runner/bin.cjs'), '--site', dist,
+      ], { encoding: 'utf8', timeout: 60_000 });
+      if (result.error) throw result.error;
+      assert.equal(result.status, 0, `${result.stdout}\n${result.stderr}`);
+      const bundle = join(dist, 'pagefind');
+      const entry = JSON.parse(await readFile(join(bundle, 'pagefind-entry.json'), 'utf8'));
+      assert.equal(entry.languages.en.page_count, 3);
+      assert.equal(entry.languages.nb.page_count, 2);
+      const fragments = await Promise.all((await readdir(join(bundle, 'fragment')))
+        .map(async (path) => {
+          const content = gunzipSync(await readFile(join(bundle, 'fragment', path))).toString();
+          return JSON.parse(content.slice('pagefind_dcd'.length));
+        }));
+      assert.deepEqual(fragments.map((fragment) => fragment.url).sort(), [
+        '/about/', '/blog/searchable-note/', '/no/about/', '/no/blog/norsk-notat/', '/talks/searchable-talk/',
+      ]);
+      const note = fragments.find((fragment) => fragment.url === '/blog/searchable-note/');
+      assert.equal(note.meta.title, 'Searchable note');
+      assert.match(note.content, /Markdown renders here/);
+      assert.match(note.content, /bounded-context/);
+      assert.match(note.content, /Distinctive source/);
+      assert.match(note.content, /Example author/);
+      const talk = fragments.find((fragment) => fragment.url === '/talks/searchable-talk/');
+      assert.match(talk.content, /Markdown renders here/);
+      assert.doesNotMatch(talk.content, /Searchable note|Distinctive source/);
+      assert.doesNotMatch(JSON.stringify(fragments), /Unpublished secret|hidden-note|hidden-talk/);
+      await readFile(join(bundle, 'pagefind-component-ui.js'));
+      await readFile(join(bundle, 'pagefind-component-ui.css'));
+    },
+    [
+      ['talk.md', post({
+        language: 'en', slug: 'searchable-talk', title: 'Searchable talk', relatedPosts: ['searchable-note'],
+      })],
+      ['draft.md', post({ language: 'en', slug: 'hidden-talk', draft: true })],
+    ],
   );
 });
 

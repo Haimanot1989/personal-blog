@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { languages, searchAlternates, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const messages = languages[locale].messages;
+---
+
+<BaseLayout locale={locale} title={messages.search} description={messages.searchDescription}
+  alternates={searchAlternates()}>
+  <section class="intro" aria-labelledby="page-title">
+    <h1 id="page-title">{messages.search}</h1>
+    <p>{messages.searchDescription}</p>
+  </section>
+  {import.meta.env.DEV ? <p>{messages.searchDev}</p> : (
+    <section class="search-results" aria-label={messages.search} data-search-root>
+      <link rel="stylesheet" href="/pagefind/pagefind-component-ui.css" />
+      <pagefind-summary></pagefind-summary>
+      <pagefind-results></pagefind-results>
+      <p data-search-error role="alert" hidden>{messages.searchError}</p>
+      <noscript><p>{messages.searchNoScript}</p></noscript>
+      <script is:inline type="module" src="/search.js"></script>
+    </section>
+  )}
+</BaseLayout>

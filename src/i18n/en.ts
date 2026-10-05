@@ -42,6 +42,12 @@ export default {
   recording: 'Recording',
   relatedWriting: 'Related writing',
   allTalks: 'All talks',
+  search: 'Search',
+  searchDescription: 'Search published writing, talks, and About content in English. Switch language to search in Norwegian.',
+  searchPlaceholder: 'Search this journal',
+  searchNoScript: 'Search requires JavaScript. You can still browse all writing and topics using the navigation.',
+  searchError: 'Search could not load. Please reload the page or browse Writing and Topics.',
+  searchDev: 'Search is available in the production preview. Run pnpm run build and pnpm run preview to use it locally.',
   topicNames: {
     'software-architecture': 'Software architecture',
     'software-design': 'Software design',

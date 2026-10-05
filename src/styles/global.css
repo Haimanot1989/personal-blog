@@ -266,6 +266,50 @@ nav a[aria-current="page"] {
   margin-bottom: 2.5rem;
 }
 
+.site-search {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.site-search input {
+  flex: 1;
+  min-width: 0;
+}
+
+.site-search input,
+.site-search button {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  padding: 0.5rem 0.75rem;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+}
+
+.site-search button {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+.site-search button:hover {
+  border-color: var(--accent);
+}
+
+.search-results {
+  --pf-font: inherit;
+  --pf-text: #242c35;
+  --pf-text-secondary: var(--muted);
+  --pf-background: #faf9f6;
+  --pf-border: var(--border);
+  --pf-border-focus: var(--accent);
+  --pf-outline-focus: var(--accent);
+  --pf-input-height: 44px;
+  --pf-result-title-font-size: 20px;
+  --pf-result-excerpt-font-size: 16px;
+}
+
 .eyebrow {
   margin-bottom: 0.75rem;
 }

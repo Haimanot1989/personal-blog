@@ -23,10 +23,10 @@ const { Content } = await render(post);
   description={post.data.description}
   publishedDate={post.data.publishedDate}
 >
-  <article>
+  <article data-pagefind-body>
     <header class="post-header">
-      <a class="back-link" href={sectionPath(locale, 'writing')}>{messages.backToPosts}</a>
-      <h1>{post.data.title}</h1>
+      <a class="back-link" data-pagefind-ignore href={sectionPath(locale, 'writing')}>{messages.backToPosts}</a>
+      <h1 data-pagefind-meta="title">{post.data.title}</h1>
       <p class="post-description">{post.data.description}</p>
       <time datetime={post.data.publishedDate.toISOString().slice(0, 10)}>
         {formatDate(post.data.publishedDate, locale)}

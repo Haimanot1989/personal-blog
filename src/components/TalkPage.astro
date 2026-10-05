@@ -21,10 +21,10 @@ const related = posts.filter((post) =>
 
 <BaseLayout locale={locale} alternates={alternates} title={talk.data.title}
   description={talk.data.description} publishedDate={talk.data.publishedDate}>
-  <article>
+  <article data-pagefind-body>
     <header class="post-header">
-      <a class="back-link" href={sectionPath(locale, 'talks')}>{messages.allTalks}</a>
-      <h1>{talk.data.title}</h1>
+      <a class="back-link" data-pagefind-ignore href={sectionPath(locale, 'talks')}>{messages.allTalks}</a>
+      <h1 data-pagefind-meta="title">{talk.data.title}</h1>
       <p class="post-description">{talk.data.description}</p>
       <time datetime={talk.data.publishedDate.toISOString().slice(0, 10)}>{formatDate(talk.data.publishedDate, locale)}</time>
       {talk.data.event && <p>{talk.data.event}</p>}
@@ -38,7 +38,7 @@ const related = posts.filter((post) =>
       </ul>
     )}
     {related.length > 0 && (
-      <section aria-labelledby="related-title">
+      <section data-pagefind-ignore="all" aria-labelledby="related-title">
         <h2 id="related-title">{messages.relatedWriting}</h2>
         <PostList locale={locale} posts={related} />
       </section>

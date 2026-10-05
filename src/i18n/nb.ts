@@ -41,6 +41,12 @@ export default {
   recording: 'Opptak',
   relatedWriting: 'Relaterte innlegg',
   allTalks: 'Alle foredrag',
+  search: 'Søk',
+  searchDescription: 'Søk i publiserte innlegg, foredrag og Om meg på norsk. Bytt språk for å søke på engelsk.',
+  searchPlaceholder: 'Søk i læringsdagboken',
+  searchNoScript: 'Søk krever JavaScript. Du kan fortsatt utforske innlegg og temaer gjennom menyen.',
+  searchError: 'Søket kunne ikke lastes. Last siden på nytt eller utforsk Innlegg og Temaer.',
+  searchDev: 'Søk er tilgjengelig i forhåndsvisningen av produksjonsbygget. Kjør pnpm run build og pnpm run preview for å søke lokalt.',
   topicNames: {
     'software-architecture': 'Programvarearkitektur',
     'software-design': 'Programvaredesign',

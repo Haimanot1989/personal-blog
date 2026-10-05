@@ -22,7 +22,36 @@ npm run build    # Statisk nettsted i dist/
 npm run preview  # Forhåndsvis det siste bygget lokalt
 ```
 
-Prosjektet bruker `astro/tsconfigs/strictest`. Alle sider er statisk HTML med responsiv CSS, uten JavaScript i nettleseren. React er ikke installert: det trengs ingen interaktivitet nå. Det er ingen backend, innlogging, analyse, kommentarer eller CMS.
+Prosjektet bruker `astro/tsconfigs/strictest`. Alle sider er statisk HTML med
+responsiv CSS. Bare søkesidene laster JavaScript; lesing og navigasjon fungerer
+uten det. React er ikke installert. Det er ingen backend, innlogging, analyse,
+kommentarer eller CMS.
+
+## Søk
+
+Søkefeltet i toppteksten åpner `/search/?q=...` eller `/no/search/?q=...`.
+Det er sidens eneste søkefelt. På søkesiden oppdaterer det resultatene når
+du trykker Enter eller søkeknappen, uten å laste siden på nytt.
+Pagefind indekserer publiserte innlegg, foredrag og Om meg etter Astro-bygget.
+Søket dekker titler, brødtekst, temaer, formater, stikkord og kilder, men ikke
+utkast, 404-siden eller oversikter som gjentar innlegg. Relaterte innlegg på
+foredragssider tas ikke med i foredragets indeks.
+
+Søket skjer lokalt i nettleseren, uten eksterne tjenester, sporing eller
+informasjonskapsler. Det følger sidens språk. Språkvelgeren på søkesiden beholder
+søkeordet og åpner søket på det andre språket. Resultatene viser utdrag og lenker
+til originalinnholdet. Uten JavaScript vises en forklaring, og menyen fungerer
+fortsatt.
+
+`pnpm run build` lager både nettstedet og `dist/pagefind/`. GitHub Actions
+bruker samme kommando, så søkeindeksen følger automatisk med ved publisering.
+For å prøve søket lokalt, kjør `pnpm run build` og deretter `pnpm run preview`.
+Utviklingsserveren (`pnpm run dev`) bygger ikke indeksen; søkesiden viser
+en forklaring om dette i utviklingsmodus.
+
+`web-types.json` registrerer Pagefind-elementene for JetBrains-editorer.
+Pagefind-modulen lastes fra en URL fordi filen genereres i `dist/pagefind/`
+under bygging og ikke ligger i kildekoden.
 
 ## Nye innlegg
 
