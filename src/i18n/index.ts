@@ -51,6 +51,10 @@ export function talkPath(locale: Locale, slug: string): string {
   return `${sectionPath(locale, 'talks')}${slug}/`;
 }
 
+export function tagPath(locale: Locale, tag: string): string {
+  return `${homePath(locale)}tags/${tag}/`;
+}
+
 export function sectionAlternates(section: Section): Alternate[] {
   return supportedLocales.map((locale) => ({ locale, href: sectionPath(locale, section) }));
 }

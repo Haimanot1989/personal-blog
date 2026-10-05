@@ -268,7 +268,8 @@ test('translations have localized pages, reciprocal alternates and language-pres
           assert.match(norwegian, /rel="alternate" hreflang="en" href="https:\/\/haimanot\.dev\/topics\/software-design\/"/);
           assert.match(emptyTopic, /There are no published posts yet/);
           assert.match(article, /Practice report/);
-          assert.match(article, /trade-offs, modularity/);
+          assert.match(article, /class="tag-bubble" href="\/tags\/trade-offs\/">trade-offs/);
+          assert.match(article, /class="tag-bubble" href="\/tags\/modularity\/">modularity/);
           assert.match(article, /<cite>Architecture book<\/cite>/);
           assert.match(article, /An author/);
           assert.match(article, /Chapter 3/);
@@ -338,6 +339,50 @@ test('translations have localized pages, reciprocal alternates and language-pres
           ['untranslated.md', post({ language: 'en', slug: 'english-only', translationKey: 'unfinished-talk' })],
           ['draft.md', post({ slug: 'secret-translation', translationKey: 'unfinished-talk', draft: true })],
         ],
+      );
+    });
+
+    test('tag bubbles and clouds link to sorted localized posts and never expose draft-only tags', async () => {
+      await withBuild(
+        [
+          ['older.md', post({ language: 'en', slug: 'older-note', tags: ['ddd', 'modularity'] })],
+          ['newer.md', post({
+            language: 'en', slug: 'newer-note', tags: ['ddd'], publishedDate: '2026-02-01',
+          })],
+          ['unrelated.md', post({ language: 'en', slug: 'unrelated', tags: [] })],
+          ['norwegian.md', post({ slug: 'norsk-notat', tags: ['ddd'] })],
+          ['draft.md', post({ language: 'en', slug: 'secret', tags: ['ddd', 'draft-only'], draft: true })],
+        ],
+        async ({ status, output, dist }) => {
+          assert.equal(status, 0, output);
+          const writing = await readFile(join(dist, 'writing/index.html'), 'utf8');
+          const cloud = writing.match(/<section class="browse-tags"[\s\S]*?<\/section>/)?.[0];
+          assert.ok(cloud);
+          assert.match(cloud, /Browse by tag/);
+          assert.equal((cloud.match(/href="\/tags\/ddd\/"/g) ?? []).length, 1);
+          assert.ok(cloud.indexOf('/tags/ddd/') < cloud.indexOf('/tags/modularity/'));
+          const tagged = await readFile(join(dist, 'tags/ddd/index.html'), 'utf8');
+          const norwegian = await readFile(join(dist, 'no/tags/ddd/index.html'), 'utf8');
+          const empty = await readFile(join(dist, 'no/tags/modularity/index.html'), 'utf8');
+          const article = await readFile(join(dist, 'blog/older-note/index.html'), 'utf8');
+          assert.match(article, /class="tag-bubble" href="\/tags\/ddd\/">ddd<\/a>/);
+          assert.match(tagged, /<h1[^>]*>Tags: ddd<\/h1>/);
+          assert.match(tagged, /rel="canonical" href="https:\/\/haimanot\.dev\/tags\/ddd\/"/);
+          assert.match(tagged, /href="\/no\/tags\/ddd\/" hreflang="nb"/);
+          assert.ok(tagged.indexOf('/blog/newer-note/') < tagged.indexOf('/blog/older-note/'));
+          assert.doesNotMatch(tagged, /\/blog\/unrelated\/|\/no\/blog\/norsk-notat\/|\/blog\/secret\//);
+          assert.match(norwegian, /Stikkord: ddd/);
+          assert.match(norwegian, /class="tag-bubble" href="\/no\/tags\/ddd\/"/);
+          assert.match(norwegian, /href="\/no\/blog\/norsk-notat\/"/);
+          assert.doesNotMatch(norwegian, /\/blog\/older-note\/|\/blog\/newer-note\//);
+          assert.match(empty, /Det er ingen publiserte innlegg ennå/);
+          assert.match(empty, /href="\/tags\/modularity\/" hreflang="en"/);
+          for (const html of [writing, tagged, norwegian, empty, article]) {
+            assert.doesNotMatch(html, /draft-only|<script\b/);
+          }
+          await assert.rejects(readFile(join(dist, 'tags/draft-only/index.html')), { code: 'ENOENT' });
+          await assert.rejects(readFile(join(dist, 'no/tags/draft-only/index.html')), { code: 'ENOENT' });
+        },
       );
     });
 

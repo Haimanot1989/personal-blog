@@ -1,6 +1,7 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import { languages, topicPath } from '../i18n';
+import TagCloud from './TagCloud.astro';
 
 interface Props {
   post: CollectionEntry<'blog'>;
@@ -21,9 +22,9 @@ const messages = languages[locale].messages;
     <dd>{messages.formatNames[format]}</dd>
   </div>
   {tags.length > 0 && (
-    <div>
+    <div class="post-tags">
       <dt>{messages.tagsLabel}:</dt>
-      <dd>{tags.join(', ')}</dd>
+      <dd><TagCloud locale={locale} tags={tags} /></dd>
     </div>
   )}
 </dl>

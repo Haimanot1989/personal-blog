@@ -1,40 +1,52 @@
 ---
 import type { CollectionEntry } from 'astro:content';
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { languages, sectionAlternates, supportedLocales, topicPath, type Locale, type Section } from '../i18n';
+import { languages, sectionAlternates, sectionPath, supportedLocales, tagPath, topicPath, type Locale, type Section } from '../i18n';
 import type { Topic } from '../lib/taxonomy';
 import PostList from './PostList.astro';
 import TopicList from './TopicList.astro';
 import TalkList from './TalkList.astro';
+import TagCloud from './TagCloud.astro';
 
 interface Props {
   locale: Locale;
   section: Section;
   topic?: Topic;
+  tag?: string;
   posts: CollectionEntry<'blog'>[];
   talks: CollectionEntry<'talks'>[];
 }
 
-const { locale, section, topic, posts, talks } = Astro.props;
+const { locale, section, topic, tag, posts, talks } = Astro.props;
 const messages = languages[locale].messages;
-const title = topic ? messages.topicNames[topic] : messages[section];
+const title = tag ? `${messages.tagsLabel}: ${tag}` : topic ? messages.topicNames[topic] : messages[section];
 const descriptions = {
   writing: messages.writingDescription,
   topics: messages.topicsDescription,
   talks: messages.talksDescription,
   about: messages.aboutDescription,
 };
-const description = topic ? messages.topicDescriptions[topic] : descriptions[section];
-const alternates = topic
+const description = tag ? messages.tagDescription : topic ? messages.topicDescriptions[topic] : descriptions[section];
+const alternates = tag
+  ? supportedLocales.map((target) => ({ locale: target, href: tagPath(target, tag) }))
+  : topic
   ? supportedLocales.map((target) => ({ locale: target, href: topicPath(target, topic) }))
   : sectionAlternates(section);
+const tags = [...new Set(posts.flatMap((post) => post.data.tags))].sort((a, b) => a.localeCompare(b, 'en'));
 ---
 
 <BaseLayout locale={locale} title={title} description={description} alternates={alternates}>
   <section class="intro" aria-labelledby="page-title">
+    {tag && <a class="back-link" href={sectionPath(locale, 'writing')}>{messages.backToPosts}</a>}
     <h1 id="page-title">{title}</h1>
     <p>{description}</p>
   </section>
+  {section === 'writing' && !tag && tags.length > 0 && (
+    <section class="browse-tags" aria-labelledby="tags-title">
+      <h2 id="tags-title">{messages.browseTags}</h2>
+      <TagCloud locale={locale} tags={tags} />
+    </section>
+  )}
   {(section === 'writing' || topic) && (
     <section aria-labelledby="writing-title">
       <h2 id="writing-title">{messages.writing}</h2>

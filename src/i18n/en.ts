@@ -35,6 +35,8 @@ export default {
   topicLabel: 'Topic',
   formatLabel: 'Format',
   tagsLabel: 'Tags',
+  browseTags: 'Browse by tag',
+  tagDescription: 'Published writing with this tag.',
   sources: 'Sources',
   slides: 'Slides',
   recording: 'Recording',

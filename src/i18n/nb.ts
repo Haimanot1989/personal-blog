@@ -34,6 +34,8 @@ export default {
   topicLabel: 'Tema',
   formatLabel: 'Format',
   tagsLabel: 'Stikkord',
+  browseTags: 'Utforsk stikkord',
+  tagDescription: 'Publiserte innlegg med dette stikkordet.',
   sources: 'Kilder',
   slides: 'Presentasjon',
   recording: 'Opptak',

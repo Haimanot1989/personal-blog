@@ -1,0 +1,16 @@
+---
+import { tagPath, type Locale } from '../i18n';
+
+interface Props {
+  locale: Locale;
+  tags: string[];
+}
+
+const { locale, tags } = Astro.props;
+---
+
+<ul class="tag-cloud">
+  {tags.map((tag) => (
+    <li><a class="tag-bubble" href={tagPath(locale, tag)}>{tag}</a></li>
+  ))}
+</ul>

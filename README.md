@@ -103,7 +103,12 @@ Bokomtaler ligger i samme samling som andre innlegg, ikke i en egen bokmappe.
 
 `tags` er valgfritt: inntil fem unike, presise stikkord med små ASCII-bokstaver,
 tall og enkeltstående bindestreker, for eksempel `ddd` eller `working-memory`.
-De vises som tekst; temaene, ikke stikkordene, har egne oversiktssider.
+De vises som klikkbare bobler på innlegg og i innleggslistene. Innleggssiden
+(`/writing/` og `/no/writing/`) har også en alfabetisk stikkordsky. Hver boble
+går til `/tags/<stikkord>/` (norsk: `/no/tags/<stikkord>/`) med alle publiserte
+innlegg på det valgte språket som har stikkordet. Stikkord fra utkast tas ikke
+med. Språkbytte beholder stikkordet; hvis det ikke finnes publiserte innlegg
+med stikkordet på det andre språket, viser siden en tomtilstand.
 
 `sources` er en valgfri liste. Hver kilde har `title` og `type` (`book`, `course`,
 `video`, `podcast` eller `article`). `author`, `locator` (kapittel, episode eller
